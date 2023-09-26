@@ -17,8 +17,16 @@
   background-color: red;
 }
 
-img {
+.sign {
   width: 100%;
+  max-width: 500px;
   height: 100%;
   object-fit: cover;
+}
+.footer {
+  font-style: italic;
+}
+.tp {
+  width: 50px;
+  margin-left: 10px;
 }

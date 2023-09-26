@@ -5,6 +5,7 @@ import useInterval from "./useInterval";
 import C from "./constants";
 import bathroomYes from "./bathroom-yes.png";
 import bathroomNo from "./bathroom-no.jpg";
+import tp from "./tp.png";
 
 function App() {
   const [hours, setHours] = useState("0");
@@ -65,13 +66,24 @@ function App() {
               <h1 className="text-bold">{`The time is ${
                 hours > 12 ? hours - 12 : hours === 0 ? 12 : hours
               }:${minutes}:${seconds} ${hours >= 12 ? "PM" : "AM"}`}</h1>
+              <h4>
+                {isNoPottyTime
+                  ? "The bathroom pass is not available"
+                  : "The bathroom pass is available"}
+              </h4>
             </div>
             <div className="card-body">
               {isNoPottyTime ? (
-                <img src={bathroomNo} />
+                <img className="sign" src={bathroomNo} />
               ) : (
-                <img src={bathroomYes} />
+                <img className="sign" src={bathroomYes} />
               )}
+            </div>
+            <div className="card-footer">
+              <h6 className="footer">
+                When-Can-I-Go is a public service provided by Mr. Jaffe
+                <img src={tp} className="tp" />
+              </h6>
             </div>
           </div>
         </div>
