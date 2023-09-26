@@ -48,14 +48,14 @@ function App() {
       return { start: start + margin, end: end - margin };
     });
     setMargins(margins);
-  }, []);
+  }, [bells, margins, margin]);
 
   useEffect(() => {
     setIsNoPottyTime(
       margins &&
         margins.some(({ start, end }) => elapsed >= start && elapsed <= end),
     );
-  }, [elapsed]);
+  }, [elapsed, margins]);
 
   return (
     <div className="container">
@@ -74,15 +74,15 @@ function App() {
             </div>
             <div className="card-body">
               {isNoPottyTime ? (
-                <img className="sign" src={bathroomNo} />
+                <img className="sign" src={bathroomNo} alt="No bathroom" />
               ) : (
-                <img className="sign" src={bathroomYes} />
+                <img className="sign" src={bathroomYes} alt="Bathroom OK" />
               )}
             </div>
             <div className="card-footer">
               <h6 className="footer">
                 When-Can-I-Go is a public service provided by Mr. Jaffe
-                <img src={tp} className="tp" />
+                <img src={tp} className="tp" alt="TP roll" />
               </h6>
             </div>
           </div>
