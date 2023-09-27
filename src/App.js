@@ -1,23 +1,25 @@
 import "./bootstrap-yeti.min.css";
 import "./App.css";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import useInterval from "./useInterval";
 import C from "./constants";
 import bathroomYes from "./bathroom-yes.png";
 import bathroomNo from "./bathroom-no.jpg";
 import tp from "./tp.png";
 
+const isMonday = new Date().getDay() === 1;
+const bells = isMonday ? C.schedule.mod : C.schedule.normal;
+
 function App() {
-  const [hours, setHours] = useState("0");
-  const [minutes, setMinutes] = useState("0");
-  const [seconds, setSeconds] = useState("0");
-  const [elapsed, setElapsed] = useState(0);
-  const [isMonday] = useState(new Date().getDay() === 1);
-  const [margins, setMargins] = useState(null);
+  const [time, setTime] = useState({
+    hours: "00",
+    minutes: "00",
+    seconds: "00",
+    elapsed: 0,
+  });
   const [isNoPottyTime, setIsNoPottyTime] = useState(false);
   const [countdown, setCountdown] = useState(-1);
 
-  const bells = isMonday ? C.schedule.mod : C.schedule.normal;
   const margin = C.margin;
 
   const breakUpTime = (time) => {
@@ -26,48 +28,49 @@ function App() {
     const seconds = parseInt(time.substring(6, 8), 10);
     return { hours, minutes, seconds };
   };
+
   const computeElapsed = ({ hours, minutes, seconds }) =>
     hours * 60 * 60 + minutes * 60 + seconds;
 
   const updateTime = () => {
-    const time = new Date();
-    const hours = time.getHours();
-    const minutes = time.getMinutes();
-    const seconds = time.getSeconds();
-    setHours(hours + "");
-    setMinutes(minutes < 10 ? "0" + minutes : minutes + "");
-    setSeconds(seconds < 10 ? "0" + seconds : seconds + "");
-    setElapsed(computeElapsed({ hours, minutes, seconds }));
+    const _time = new Date();
+    const hours = _time.getHours();
+    const minutes = _time.getMinutes();
+    const seconds = _time.getSeconds();
+    setTime({
+      hours: hours + "",
+      minutes: minutes < 10 ? "0" + minutes : minutes + "",
+      seconds: seconds < 10 ? "0" + seconds : seconds + "",
+      elapsed: computeElapsed({ hours, minutes, seconds }),
+    });
   };
 
   useInterval(updateTime, 1000);
 
-  const marginsJSON = JSON.stringify(margins);
-  const bellsJSON = JSON.stringify(bells);
-
-  useEffect(() => {
-    const margins = bells.map((period) => {
+  const margins = useMemo(() => {
+    return bells.map((period) => {
       const start = computeElapsed(breakUpTime(period.start));
       const end = computeElapsed(breakUpTime(period.end));
       return { start: start + margin, end: end - margin };
     });
-    setMargins(margins);
-  }, [bellsJSON, marginsJSON, margin]);
+  }, [margin]);
 
   useEffect(() => {
     setIsNoPottyTime(
       margins &&
-        margins.some(({ start, end }) => elapsed >= start && elapsed <= end),
+        margins.some(
+          ({ start, end }) => time.elapsed >= start && time.elapsed <= end,
+        ),
     );
-  }, [elapsed, marginsJSON]);
+  }, [time.elapsed, margins]);
 
   useEffect(() => {
     if (!margins) return;
     const period = margins.find(
-      ({ start, end }) => start < elapsed && elapsed < end,
+      ({ start, end }) => start < time.elapsed && time.elapsed < end,
     );
     if (period) {
-      const timeLeft = period.end - elapsed;
+      const timeLeft = period.end - time.elapsed;
       if (timeLeft < 0) return setCountdown(-1);
       const m = Math.trunc(timeLeft / 60);
       const s = timeLeft % 60;
@@ -75,7 +78,7 @@ function App() {
     } else {
       setCountdown(-1);
     }
-  }, [marginsJSON, elapsed]);
+  }, [margins, time.elapsed]);
 
   return (
     <div className="container">
@@ -84,11 +87,21 @@ function App() {
           <div className="card">
             <div className={`card-header ${isNoPottyTime ? "no-potty" : ""}`}>
               <h1 className="text-bold">{`The time is ${
-                hours > 12 ? hours - 12 : hours === 0 ? 12 : hours
-              }:${minutes}:${seconds} ${hours >= 12 ? "PM" : "AM"}`}</h1>
+                time.hours > 12
+                  ? time.hours - 12
+                  : time.hours === 0
+                  ? 12
+                  : time.hours
+              }:${time.minutes}:${time.seconds} ${
+                time.hours >= 12 ? "PM" : "AM"
+              }`}</h1>
               <h4>
                 {isNoPottyTime
-                  ? `The bathroom pass will be available in ${countdown}`
+                  ? `${
+                      countdown < 0
+                        ? "Updating..."
+                        : "The bathroom pass will be available in " + countdown
+                    }`
                   : "The bathroom pass is available"}
               </h4>
             </div>
