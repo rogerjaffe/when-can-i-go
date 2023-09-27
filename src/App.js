@@ -15,6 +15,7 @@ function App() {
   const [isMonday] = useState(new Date().getDay() === 1);
   const [margins, setMargins] = useState(null);
   const [isNoPottyTime, setIsNoPottyTime] = useState(false);
+  const [countdown, setCountdown] = useState(-1);
 
   const bells = isMonday ? C.schedule.mod : C.schedule.normal;
   const margin = C.margin;
@@ -41,6 +42,9 @@ function App() {
 
   useInterval(updateTime, 1000);
 
+  const marginsJSON = JSON.stringify(margins);
+  const bellsJSON = JSON.stringify(bells);
+
   useEffect(() => {
     const margins = bells.map((period) => {
       const start = computeElapsed(breakUpTime(period.start));
@@ -48,14 +52,30 @@ function App() {
       return { start: start + margin, end: end - margin };
     });
     setMargins(margins);
-  }, [bells, margins, margin]);
+  }, [bellsJSON, marginsJSON, margin]);
 
   useEffect(() => {
     setIsNoPottyTime(
       margins &&
         margins.some(({ start, end }) => elapsed >= start && elapsed <= end),
     );
-  }, [elapsed, margins]);
+  }, [elapsed, marginsJSON]);
+
+  useEffect(() => {
+    if (!margins) return;
+    const period = margins.find(
+      ({ start, end }) => start < elapsed && elapsed < end,
+    );
+    if (period) {
+      const timeLeft = period.end - elapsed;
+      if (timeLeft < 0) return setCountdown(-1);
+      const m = Math.trunc(timeLeft / 60);
+      const s = timeLeft % 60;
+      setCountdown(`${m}:${s < 10 ? "0" + s : s}`);
+    } else {
+      setCountdown(-1);
+    }
+  }, [marginsJSON, elapsed]);
 
   return (
     <div className="container">
@@ -68,7 +88,7 @@ function App() {
               }:${minutes}:${seconds} ${hours >= 12 ? "PM" : "AM"}`}</h1>
               <h4>
                 {isNoPottyTime
-                  ? "The bathroom pass is not available"
+                  ? `The bathroom pass will be available in ${countdown}`
                   : "The bathroom pass is available"}
               </h4>
             </div>
